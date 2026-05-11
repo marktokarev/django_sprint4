@@ -13,14 +13,12 @@ POSTS_PER_PAGE = 10
 
 
 def annotate_comment_count(queryset):
-    """Аннотирует queryset количеством комментариев."""
     return queryset.annotate(
         comment_count=Count('comments'),
     ).order_by('-pub_date')
 
 
 def get_published_posts():
-    """Возвращает QuerySet опубликованных постов с количеством комментариев."""
     return annotate_comment_count(
         Post.objects.select_related(
             'author', 'location', 'category',
@@ -33,20 +31,17 @@ def get_published_posts():
 
 
 def paginate_queryset(request, queryset, per_page=POSTS_PER_PAGE):
-    """Пагинация queryset."""
     paginator = Paginator(queryset, per_page)
     page_number = request.GET.get('page')
     return paginator.get_page(page_number)
 
 
 def index(request):
-    """Главная страница."""
     page_obj = paginate_queryset(request, get_published_posts())
     return render(request, 'blog/index.html', {'page_obj': page_obj})
 
 
 def post_detail(request, post_id):
-    """Страница отдельной публикации."""
     post = get_object_or_404(Post, pk=post_id)
     if post.author != request.user:
         post = get_object_or_404(
@@ -63,7 +58,6 @@ def post_detail(request, post_id):
 
 
 def category_posts(request, category_slug):
-    """Страница категории."""
     category = get_object_or_404(
         Category,
         slug=category_slug,
@@ -78,7 +72,6 @@ def category_posts(request, category_slug):
 
 
 def profile(request, username):
-    """Страница пользователя."""
     profile_user = get_object_or_404(User, username=username)
     if request.user == profile_user:
         posts = annotate_comment_count(
@@ -99,7 +92,6 @@ def profile(request, username):
 
 @login_required
 def edit_profile(request):
-    """Редактирование профиля."""
     form = UserForm(request.POST or None, instance=request.user)
     if form.is_valid():
         form.save()
@@ -109,7 +101,6 @@ def edit_profile(request):
 
 @login_required
 def create_post(request):
-    """Создание публикации."""
     form = PostForm(request.POST or None, files=request.FILES or None)
     if form.is_valid():
         post = form.save(commit=False)
@@ -121,7 +112,6 @@ def create_post(request):
 
 @login_required
 def edit_post(request, post_id):
-    """Редактирование публикации."""
     post = get_object_or_404(Post, pk=post_id)
     if post.author != request.user:
         return redirect('blog:post_detail', post_id=post_id)
@@ -138,7 +128,6 @@ def edit_post(request, post_id):
 
 @login_required
 def delete_post(request, post_id):
-    """Удаление публикации."""
     post = get_object_or_404(Post, pk=post_id)
     if post.author != request.user:
         return redirect('blog:post_detail', post_id=post_id)
@@ -151,7 +140,6 @@ def delete_post(request, post_id):
 
 @login_required
 def add_comment(request, post_id):
-    """Добавление комментария."""
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST)
     if form.is_valid():
@@ -164,7 +152,6 @@ def add_comment(request, post_id):
 
 @login_required
 def edit_comment(request, post_id, comment_id):
-    """Редактирование комментария."""
     comment = get_object_or_404(Comment, pk=comment_id)
     if comment.author != request.user:
         return redirect('blog:post_detail', post_id=post_id)
@@ -180,7 +167,6 @@ def edit_comment(request, post_id, comment_id):
 
 @login_required
 def delete_comment(request, post_id, comment_id):
-    """Удаление комментария."""
     comment = get_object_or_404(Comment, pk=comment_id)
     if comment.author != request.user:
         return redirect('blog:post_detail', post_id=post_id)
